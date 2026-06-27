@@ -1,0 +1,44 @@
+spring:
+  application:
+    name: slowfit
+  datasource:
+    url: jdbc:mariadb://localhost:3306/slowfit
+    username: root
+    password: 1111
+    driver-class-name: org.mariadb.jdbc.Driver
+    hikari:
+      maximum-pool-size: 10
+      minimum-idle: 5
+      connection-timeout: 30000
+      idle-timeout: 600000
+      max-lifetime: 1800000
+  jpa:
+    hibernate:
+      ddl-auto: create
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.MariaDBDialect
+        format_sql: true
+        show_sql: true
+  jackson:
+    serialization:
+      write-dates-as-timestamps: false
+    date-format: yyyy-MM-dd HH:mm:ss
+  # data:
+  #   redis:
+  #     host: localhost
+  #     port: 6379
+  #     timeout: 60000ms
+  #     jedis:
+  #       pool:
+  #         max-active: 8
+  #         max-idle: 8
+  #         min-idle: 0
+  #         max-wait: -1ms
+
+server:
+  port: 9090
+
+jwt:
+  secret: your-secret-key-change-this-to-a-long-random-string-in-production
+  expiration: 86400000 # 24시간 (밀리초)
