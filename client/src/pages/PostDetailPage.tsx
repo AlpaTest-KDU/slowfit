@@ -1,0 +1,218 @@
+import { useEffect, useState } from 'react';
+import { useNavigate, useParams } from 'react-router-dom';
+import axios from 'axios';
+
+interface PostDetail {
+  id: number;
+  username: string;
+  boardType: 'JOGGING' | 'DIET' | 'CERTIFICATION';
+  title: string;
+  content: string;
+  viewCount: number;
+  likeCount: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+interface CommentDetail {
+  id: number;
+  username: string;
+  mentionUsername: string | null;
+  content: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export default function PostDetailPage() {
+  const { id } = useParams<{ id: string }>();
+  const [post, setPost] = useState<PostDetail | null>(null);
+  const [comments, setComments] = useState<CommentDetail[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+  const [commentContent, setCommentContent] = useState('');
+  const [mentionUsername, setMentionUsername] = useState('');
+  const [commentSubmitting, setCommentSubmitting] = useState(false);
+  const [commentError, setCommentError] = useState('');
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    if (!id) return;
+
+    const token = localStorage.getItem('accessToken');
+    if (!token) {
+      navigate('/login');
+      return;
+    }
+
+    const fetchPost = async () => {
+      setLoading(true);
+      setError('');
+
+      try {
+        const response = await axios.get(`http://localhost:9090/api/posts/${id}`, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+        setPost(response.data);
+      } catch (err) {
+        console.error(err);
+        setError('게시글을 불러오는 데 실패했습니다.');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    const fetchComments = async () => {
+      try {
+        const response = await axios.get<CommentDetail[]>(`http://localhost:9090/api/posts/${id}/comments`, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+        setComments(response.data);
+      } catch (err) {
+        console.error(err);
+      }
+    };
+
+    fetchPost();
+    fetchComments();
+  }, [id, navigate]);
+
+  const handleCommentSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    setCommentError('');
+    setCommentSubmitting(true);
+
+    const token = localStorage.getItem('accessToken');
+    if (!token) {
+      navigate('/login');
+      return;
+    }
+
+    if (!commentContent.trim()) {
+      setCommentError('댓글 내용을 입력해주세요.');
+      setCommentSubmitting(false);
+      return;
+    }
+
+    try {
+      const response = await axios.post<CommentDetail>(
+        `http://localhost:9090/api/posts/${id}/comments`,
+        {
+          content: commentContent,
+          mentionUsername: mentionUsername.trim() || null,
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+      setComments((prev) => [...prev, response.data]);
+      setCommentContent('');
+      setMentionUsername('');
+    } catch (err) {
+      console.error(err);
+      setCommentError('댓글 작성에 실패했습니다.');
+    } finally {
+      setCommentSubmitting(false);
+    }
+  };
+
+  return (
+    <div style={{ maxWidth: 800, margin: '2rem auto', padding: '1rem' }}>
+      <button type="button" onClick={() => navigate('/board')} style={{ marginBottom: '1rem', padding: '0.75rem 1rem', cursor: 'pointer' }}>
+        목록으로 돌아가기
+      </button>
+
+      {loading && <p>로딩 중...</p>}
+      {error && <p style={{ color: 'red' }}>{error}</p>}
+
+      {post ? (
+        <>
+          <article style={{ border: '1px solid #ddd', borderRadius: 8, padding: '1rem', marginBottom: '2rem' }}>
+            <h2>{post.title}</h2>
+            <p style={{ margin: '0.5rem 0', color: '#555' }}>
+              {post.boardType} · 작성자: {post.username}
+            </p>
+            <div style={{ whiteSpace: 'pre-wrap', marginBottom: '1rem' }}>{post.content}</div>
+            <div style={{ display: 'flex', gap: '1rem', fontSize: 14, color: '#555' }}>
+              <span>조회수: {post.viewCount}</span>
+              <span>좋아요: {post.likeCount}</span>
+              <span>생성: {formatDate(post.createdAt)}</span>
+              <span>수정: {formatDate(post.updatedAt)}</span>
+            </div>
+          </article>
+
+          <section style={{ marginBottom: '2rem' }}>
+            <h3 style={{ marginBottom: '1rem' }}>댓글 작성</h3>
+            <form onSubmit={handleCommentSubmit}>
+              <div style={{ marginBottom: '1rem' }}>
+                <label style={{ display: 'block', marginBottom: '0.5rem' }}>
+                  멘션 사용자명
+                </label>
+                <input
+                  type="text"
+                  value={mentionUsername}
+                  onChange={(e) => setMentionUsername(e.target.value)}
+                  placeholder="멘션할 사용자명 입력"
+                  style={{ width: '100%', padding: '0.75rem', borderRadius: 4, border: '1px solid #ccc' }}
+                />
+              </div>
+              <div style={{ marginBottom: '1rem' }}>
+                <label style={{ display: 'block', marginBottom: '0.5rem' }}>
+                  댓글 내용
+                </label>
+                <textarea
+                  value={commentContent}
+                  onChange={(e) => setCommentContent(e.target.value)}
+                  rows={4}
+                  style={{ width: '100%', padding: '0.75rem', borderRadius: 4, border: '1px solid #ccc', resize: 'vertical' }}
+                />
+              </div>
+              {commentError && <p style={{ color: 'red', marginBottom: '1rem' }}>{commentError}</p>}
+              <button
+                type="submit"
+                disabled={commentSubmitting}
+                style={{ padding: '0.75rem 1.5rem', cursor: 'pointer', borderRadius: 4, border: 'none', background: '#1976d2', color: '#fff' }}
+              >
+                {commentSubmitting ? '작성 중...' : '댓글 작성'}
+              </button>
+            </form>
+          </section>
+
+          <section>
+            <h3 style={{ marginBottom: '1rem' }}>댓글 목록</h3>
+            {comments.length === 0 ? (
+              <p>등록된 댓글이 없습니다.</p>
+            ) : (
+              comments.map((comment) => (
+                <article key={comment.id} style={{ border: '1px solid #eee', borderRadius: 8, padding: '1rem', marginBottom: '1rem' }}>
+                  <p style={{ margin: 0, color: '#333', fontWeight: 'bold' }}>
+                    {comment.username}
+                    {comment.mentionUsername ? ` → @${comment.mentionUsername}` : ''}
+                  </p>
+                  <p style={{ whiteSpace: 'pre-wrap', margin: '0.75rem 0' }}>{comment.content}</p>
+                  <div style={{ fontSize: 13, color: '#666' }}>
+                    <span>작성: {formatDate(comment.createdAt)}</span>
+                    <span style={{ marginLeft: '1rem' }}>수정: {formatDate(comment.updatedAt)}</span>
+                  </div>
+                </article>
+              ))
+            )}
+          </section>
+        </>
+      ) : (
+        !loading && <p>게시글을 찾을 수 없습니다.</p>
+      )}
+    </div>
+  );
+}
+
+const formatDate = (value: string) => {
+  if (!value) return '-';
+  const date = new Date(value);
+  return date.toLocaleString();
+};
