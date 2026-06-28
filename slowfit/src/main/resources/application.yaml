@@ -24,17 +24,17 @@ spring:
     serialization:
       write-dates-as-timestamps: false
     date-format: yyyy-MM-dd HH:mm:ss
-  # data:
-  #   redis:
-  #     host: localhost
-  #     port: 6379
-  #     timeout: 60000ms
-  #     jedis:
-  #       pool:
-  #         max-active: 8
-  #         max-idle: 8
-  #         min-idle: 0
-  #         max-wait: -1ms
+  data:
+    redis:
+      host: localhost
+      port: 6379
+      timeout: 60000ms
+      jedis:
+        pool:
+          max-active: 8
+          max-idle: 8
+          min-idle: 0
+          max-wait: -1ms
 
 server:
   port: 9090
