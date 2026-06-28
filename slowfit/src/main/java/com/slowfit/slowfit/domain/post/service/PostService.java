@@ -22,10 +22,12 @@ public class PostService {
 
     private final PostRepository postRepository;
     private final UserRepository userRepository;
+    private final RedisPostService redisPostService;
 
-    public PostService(PostRepository postRepository, UserRepository userRepository) {
+    public PostService(PostRepository postRepository, UserRepository userRepository, RedisPostService redisPostService) {
         this.postRepository = postRepository;
         this.userRepository = userRepository;
+        this.redisPostService = redisPostService;
     }
 
     public PostResponseDto createPost(@NonNull PostRequestDto requestDto) {
@@ -55,6 +57,7 @@ public class PostService {
     }
 
     public PostResponseDto getPost(@NonNull Long postId) {
+        redisPostService.increaseViewCount(postId);
         return mapToResponseDto(findPostById(postId));
     }
 

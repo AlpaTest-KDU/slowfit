@@ -33,6 +33,9 @@ export default function PostDetailPage() {
   const [mentionUsername, setMentionUsername] = useState('');
   const [commentSubmitting, setCommentSubmitting] = useState(false);
   const [commentError, setCommentError] = useState('');
+  const [liked, setLiked] = useState(false);
+  const [likeSubmitting, setLikeSubmitting] = useState(false);
+  const [likeError, setLikeError] = useState('');
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -79,6 +82,46 @@ export default function PostDetailPage() {
     fetchPost();
     fetchComments();
   }, [id, navigate]);
+
+  const handleLikeToggle = async () => {
+    const token = localStorage.getItem('accessToken');
+    if (!token) {
+      navigate('/login');
+      return;
+    }
+
+    setLikeError('');
+    setLikeSubmitting(true);
+
+    try {
+      const response = await axios.post<boolean>(
+        `http://localhost:9090/api/posts/${id}/like`,
+        {},
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      const likedResponse = response.data;
+      setPost((prev) => {
+        if (!prev) return prev;
+
+        const countDelta = likedResponse ? 1 : -1;
+        return {
+          ...prev,
+          likeCount: Math.max(0, prev.likeCount + countDelta),
+        };
+      });
+      setLiked(likedResponse);
+    } catch (err) {
+      console.error(err);
+      setLikeError('좋아요 토글에 실패했습니다.');
+    } finally {
+      setLikeSubmitting(false);
+    }
+  };
 
   const handleCommentSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -138,12 +181,28 @@ export default function PostDetailPage() {
               {post.boardType} · 작성자: {post.username}
             </p>
             <div style={{ whiteSpace: 'pre-wrap', marginBottom: '1rem' }}>{post.content}</div>
-            <div style={{ display: 'flex', gap: '1rem', fontSize: 14, color: '#555' }}>
+            <div style={{ display: 'flex', gap: '1rem', fontSize: 14, color: '#555', alignItems: 'center' }}>
               <span>조회수: {post.viewCount}</span>
               <span>좋아요: {post.likeCount}</span>
+              <button
+                type="button"
+                onClick={handleLikeToggle}
+                disabled={likeSubmitting}
+                style={{
+                  padding: '0.5rem 0.75rem',
+                  borderRadius: 4,
+                  border: '1px solid #1976d2',
+                  background: liked ? '#1976d2' : '#fff',
+                  color: liked ? '#fff' : '#1976d2',
+                  cursor: likeSubmitting ? 'not-allowed' : 'pointer',
+                }}
+              >
+                {liked ? '좋아요 취소' : '좋아요'}
+              </button>
               <span>생성: {formatDate(post.createdAt)}</span>
               <span>수정: {formatDate(post.updatedAt)}</span>
             </div>
+            {likeError && <p style={{ color: 'red' }}>{likeError}</p>}
           </article>
 
           <section style={{ marginBottom: '2rem' }}>
