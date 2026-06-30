@@ -1,4 +1,5 @@
-import { Navigate, Route, Routes } from "react-router-dom";
+import { Navigate, Route, Routes, useLocation } from "react-router-dom";
+import Navbar from "./components/Navbar";
 import BoardPage from "./pages/BoardPage";
 import ChatPage from "./pages/ChatPage";
 import LoginPage from "./pages/LoginPage";
@@ -7,16 +8,25 @@ import PostWritePage from "./pages/PostWritePage";
 import SignupPage from "./pages/SignupPage";
 
 function App() {
+  const location = useLocation();
+  const showNavbar = ["/board", "/chat", "/post/write", "/posts"].some((path) =>
+    location.pathname === path || location.pathname.startsWith(`${path}/`)
+  );
+
   return (
-    <Routes>
-      <Route path="/login" element={<LoginPage />} />
-      <Route path="/signup" element={<SignupPage />} />
-      <Route path="/board" element={<BoardPage />} />
-      <Route path="/chat" element={<ChatPage />} />
-      <Route path="/post/write" element={<PostWritePage />} />
-      <Route path="/posts/:id" element={<PostDetailPage />} />
-      <Route path="/" element={<Navigate to="/login" replace />} />
-    </Routes>
+    <>
+      {showNavbar && <Navbar />}
+      <Routes>
+        <Route path="/login" element={<LoginPage />} />
+        <Route path="/signup" element={<SignupPage />} />
+        <Route path="/board" element={<BoardPage />} />
+        <Route path="/chat" element={<ChatPage />} />
+        <Route path="/post/write" element={<PostWritePage />} />
+        <Route path="/posts/:id/edit" element={<PostWritePage />} />
+        <Route path="/posts/:id" element={<PostDetailPage />} />
+        <Route path="/" element={<Navigate to="/login" replace />} />
+      </Routes>
+    </>
   );
 }
 
