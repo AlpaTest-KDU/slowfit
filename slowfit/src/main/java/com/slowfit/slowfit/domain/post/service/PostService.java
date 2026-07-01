@@ -5,11 +5,12 @@ import com.slowfit.slowfit.domain.post.dto.PostResponseDto;
 import com.slowfit.slowfit.domain.post.entity.BoardType;
 import com.slowfit.slowfit.domain.post.entity.Post;
 import com.slowfit.slowfit.domain.post.repository.PostRepository;
+import com.slowfit.slowfit.domain.user.entitiy.Role;
 import com.slowfit.slowfit.domain.user.entitiy.User;
 import com.slowfit.slowfit.domain.user.repository.UserRepository;
-import java.util.List;
 import java.util.Objects;
-import java.util.stream.Collectors;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.lang.NonNull;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -38,22 +39,21 @@ public class PostService {
             .boardType(requestDto.getBoardType())
             .title(requestDto.getTitle())
             .content(requestDto.getContent())
+            .pace(requestDto.getPace())
             .build());
 
         Post savedPost = postRepository.save(post);
         return mapToResponseDto(savedPost);
     }
 
-    public List<PostResponseDto> getAllPosts() {
-        return postRepository.findAll().stream()
-            .map(this::mapToResponseDto)
-            .collect(Collectors.toList());
+    public Page<PostResponseDto> getAllPosts(@NonNull Pageable pageable) {
+        return postRepository.findAll(pageable)
+            .map(this::mapToResponseDto);
     }
 
-    public List<PostResponseDto> getPostsByBoardType(BoardType boardType) {
-        return postRepository.findByBoardType(boardType).stream()
-            .map(this::mapToResponseDto)
-            .collect(Collectors.toList());
+    public Page<PostResponseDto> getPostsByBoardType(BoardType boardType, @NonNull Pageable pageable) {
+        return postRepository.findByBoardType(boardType, pageable)
+            .map(this::mapToResponseDto);
     }
 
     public PostResponseDto getPost(@NonNull Long postId) {
@@ -68,6 +68,7 @@ public class PostService {
         post.setBoardType(requestDto.getBoardType());
         post.setTitle(requestDto.getTitle());
         post.setContent(requestDto.getContent());
+        post.setPace(requestDto.getPace());
 
         return mapToResponseDto(post);
     }
@@ -90,8 +91,12 @@ public class PostService {
     }
 
     private void validatePostOwner(Post post) {
-        String username = SecurityContextHolder.getContext().getAuthentication().getName();
-        if (!post.getUser().getUsername().equals(username)) {
+        User currentUser = findAuthenticatedUser();
+        if (currentUser.getRole() == Role.ADMIN) {
+            return;
+        }
+
+        if (!post.getUser().getUsername().equals(currentUser.getUsername())) {
             throw new AccessDeniedException("You are not authorized to modify this post.");
         }
     }
@@ -103,6 +108,7 @@ public class PostService {
             .boardType(post.getBoardType())
             .title(post.getTitle())
             .content(post.getContent())
+            .pace(post.getPace())
             .viewCount(post.getViewCount())
             .likeCount(post.getLikeCount())
             .createdAt(post.getCreatedAt())

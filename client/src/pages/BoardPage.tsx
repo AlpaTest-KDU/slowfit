@@ -2,17 +2,21 @@ import { useCallback, useEffect, useState } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
 
+const PAGE_SIZE = 10;
+
 export default function BoardPage() {
   const [posts, setPosts] = useState<Array<PostItem>>([]);
   const [activeBoardType, setActiveBoardType] = useState<BoardType | null>(
     null,
   );
+  const [page, setPage] = useState(0);
+  const [totalPages, setTotalPages] = useState(1);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const navigate = useNavigate();
 
   const fetchPosts = useCallback(
-    async (boardType: BoardType | null) => {
+    async (boardType: BoardType | null, pageNumber = 0) => {
       const token = localStorage.getItem("accessToken");
       if (!token) {
         navigate("/login");
@@ -23,14 +27,30 @@ export default function BoardPage() {
       setError("");
 
       try {
+        const params: Record<string, unknown> = {
+          page: pageNumber,
+          size: PAGE_SIZE,
+        };
+
+        if (boardType) {
+          params.boardType = boardType;
+        }
+
         const response = await axios.get("http://localhost:9090/api/posts", {
-          params: boardType ? { boardType } : {},
+          params,
           headers: {
             Authorization: `Bearer ${token}`,
           },
         });
 
-        setPosts(response.data || []);
+        const pageData = response.data;
+        const content = pageData?.content ?? [];
+        const currentPage = typeof pageData?.number === "number" ? pageData.number : pageNumber;
+        const total = typeof pageData?.totalPages === "number" ? pageData.totalPages : 1;
+
+        setPosts(content);
+        setPage(currentPage);
+        setTotalPages(total);
         setActiveBoardType(boardType);
       } catch (err) {
         console.error(err);
@@ -44,14 +64,26 @@ export default function BoardPage() {
 
   useEffect(() => {
     const initialize = async () => {
-      await fetchPosts(null);
+      await fetchPosts(null, 0);
     };
 
     initialize();
   }, [fetchPosts]);
 
   const handleTabClick = (boardType: BoardType | null) => {
-    fetchPosts(boardType);
+    fetchPosts(boardType, 0);
+  };
+
+  const handlePrevPage = () => {
+    if (page > 0) {
+      fetchPosts(activeBoardType, page - 1);
+    }
+  };
+
+  const handleNextPage = () => {
+    if (page + 1 < totalPages) {
+      fetchPosts(activeBoardType, page + 1);
+    }
   };
 
   return (
@@ -102,16 +134,17 @@ export default function BoardPage() {
       {posts.length === 0 && !loading ? (
         <p>등록된 게시글이 없습니다.</p>
       ) : (
-        <div style={{ display: "grid", gap: "1rem" }}>
-          {posts.map((post) => (
-            <article
-              key={post.id}
-              style={{
-                border: "1px solid #ddd",
-                padding: "1rem",
-                borderRadius: 8,
-              }}
-            >
+        <>
+          <div style={{ display: "grid", gap: "1rem" }}>
+            {posts.map((post) => (
+              <article
+                key={post.id}
+                style={{
+                  border: "1px solid #ddd",
+                  padding: "1rem",
+                  borderRadius: 8,
+                }}
+              >
               <div
                 style={{
                   marginBottom: "0.5rem",
@@ -146,6 +179,39 @@ export default function BoardPage() {
             </article>
           ))}
         </div>
+
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            gap: "1rem",
+            marginTop: "1.5rem",
+          }}
+        >
+          <button
+            type="button"
+            onClick={handlePrevPage}
+            disabled={page === 0}
+            style={paginationButtonStyle(page === 0)}
+          >
+            이전
+          </button>
+          <span>
+            {totalPages > 0
+              ? `현재 페이지 ${page + 1} / ${totalPages}`
+              : `현재 페이지 ${page + 1}`}
+          </span>
+          <button
+            type="button"
+            onClick={handleNextPage}
+            disabled={page + 1 >= totalPages}
+            style={paginationButtonStyle(page + 1 >= totalPages)}
+          >
+            다음
+          </button>
+        </div>
+      </>
       )}
     </div>
   );
@@ -172,6 +238,15 @@ const tabButtonStyle = (active: boolean) => ({
   background: active ? "#333" : "#fff",
   color: active ? "#fff" : "#000",
   cursor: "pointer",
+});
+
+const paginationButtonStyle = (disabled: boolean) => ({
+  padding: "0.5rem 1rem",
+  border: "1px solid #ccc",
+  borderRadius: 6,
+  background: disabled ? "#f5f5f5" : "#fff",
+  color: disabled ? "#999" : "#000",
+  cursor: disabled ? "not-allowed" : "pointer",
 });
 
 const formatDate = (value: string) => {

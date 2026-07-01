@@ -22,6 +22,7 @@ export default function LoginPage() {
       const token = response.data.token;
       localStorage.setItem("accessToken", token);
       localStorage.setItem("username", username);
+      localStorage.setItem("role", response.data.role);
       navigate("/board");
     } catch (error) {
       console.error("Login failed:", error);

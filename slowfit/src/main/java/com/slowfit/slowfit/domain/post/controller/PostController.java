@@ -6,7 +6,9 @@ import com.slowfit.slowfit.domain.post.entity.BoardType;
 import com.slowfit.slowfit.domain.post.service.PostService;
 import com.slowfit.slowfit.domain.post.service.RedisPostService;
 import jakarta.validation.Valid;
-import java.util.List;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -39,10 +41,15 @@ public class PostController {
     }
 
     @GetMapping
-    public ResponseEntity<List<PostResponseDto>> getPosts(@RequestParam(required = false) BoardType boardType) {
-        List<PostResponseDto> posts = (boardType == null)
-            ? postService.getAllPosts()
-            : postService.getPostsByBoardType(boardType);
+    public ResponseEntity<Page<PostResponseDto>> getPosts(
+        @RequestParam(required = false) BoardType boardType,
+        @RequestParam(defaultValue = "0") int page,
+        @RequestParam(defaultValue = "10") int size
+    ) {
+        Pageable pageable = PageRequest.of(page, size);
+        Page<PostResponseDto> posts = (boardType == null)
+            ? postService.getAllPosts(pageable)
+            : postService.getPostsByBoardType(boardType, pageable);
         return ResponseEntity.ok(posts);
     }
 

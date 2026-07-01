@@ -52,6 +52,8 @@ public class Post {
     @Column(nullable = false)
     private String content;
 
+    private String pace;
+
     @Builder.Default
     @Column(nullable = false)
     private Integer viewCount = 0;

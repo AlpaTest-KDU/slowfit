@@ -6,6 +6,7 @@ import com.slowfit.slowfit.domain.comment.entitiy.Comment;
 import com.slowfit.slowfit.domain.comment.repository.CommentRepository;
 import com.slowfit.slowfit.domain.post.entity.Post;
 import com.slowfit.slowfit.domain.post.repository.PostRepository;
+import com.slowfit.slowfit.domain.user.entitiy.Role;
 import com.slowfit.slowfit.domain.user.entitiy.User;
 import com.slowfit.slowfit.domain.user.repository.UserRepository;
 import java.util.List;
@@ -85,8 +86,12 @@ public class CommentService {
     }
 
     private void validateCommentOwner(Comment comment) {
-        String username = SecurityContextHolder.getContext().getAuthentication().getName();
-        if (!comment.getUser().getUsername().equals(username)) {
+        User currentUser = findAuthenticatedUser();
+        if (currentUser.getRole() == Role.ADMIN) {
+            return;
+        }
+
+        if (!comment.getUser().getUsername().equals(currentUser.getUsername())) {
             throw new AccessDeniedException("You are not authorized to delete this comment.");
         }
     }

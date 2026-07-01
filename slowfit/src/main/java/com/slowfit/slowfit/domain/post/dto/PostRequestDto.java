@@ -26,4 +26,6 @@ public class PostRequestDto {
 
     @NotBlank
     private String content;
+
+    private String pace;
 }

@@ -1,12 +1,15 @@
 package com.slowfit.slowfit.domain.user.controller;
 
+import java.util.Map;
+
+import com.slowfit.slowfit.domain.user.dto.LoginResponseDto;
 import com.slowfit.slowfit.domain.user.dto.UserLoginRequestDto;
 import com.slowfit.slowfit.domain.user.dto.UserRequestDto;
 import com.slowfit.slowfit.domain.user.dto.UserResponseDto;
 import com.slowfit.slowfit.domain.user.service.UserService;
-import jakarta.validation.Valid;
 import java.util.Collections;
-import java.util.Map;
+import jakarta.validation.Valid;
+
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -33,9 +36,9 @@ public class UserController {
     }
 
     @PostMapping("/login")
-    public ResponseEntity<Map<String, String>> login(@Valid @RequestBody UserLoginRequestDto requestDto) {
-        String token = userService.login(requestDto.getUsername(), requestDto.getPassword());
-        return ResponseEntity.ok(Collections.singletonMap("token", token));
+    public ResponseEntity<LoginResponseDto> login(@Valid @RequestBody UserLoginRequestDto requestDto) {
+        LoginResponseDto responseDto = userService.login(requestDto.getUsername(), requestDto.getPassword());
+        return ResponseEntity.ok(responseDto);
     }
 
     @GetMapping("/me")

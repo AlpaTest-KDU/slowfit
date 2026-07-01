@@ -22,6 +22,7 @@ public class PostResponseDto {
     private BoardType boardType;
     private String title;
     private String content;
+    private String pace;
     private Integer viewCount;
     private Integer likeCount;
     private LocalDateTime createdAt;

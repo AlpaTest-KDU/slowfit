@@ -1,5 +1,6 @@
 package com.slowfit.slowfit.domain.user.service;
 
+import com.slowfit.slowfit.domain.user.dto.LoginResponseDto;
 import com.slowfit.slowfit.domain.user.dto.UserRequestDto;
 import com.slowfit.slowfit.domain.user.dto.UserResponseDto;
 import com.slowfit.slowfit.domain.user.entitiy.Role;
@@ -55,7 +56,7 @@ public class UserService {
             .build();
     }
 
-    public String login(String username, String password) {
+    public LoginResponseDto login(String username, String password) {
         User user = userRepository.findByUsername(username)
             .orElseThrow(() -> new IllegalArgumentException("Invalid username or password."));
 
@@ -63,6 +64,11 @@ public class UserService {
             throw new IllegalArgumentException("Invalid username or password.");
         }
 
-        return jwtUtil.generateToken(username);
+        String token = jwtUtil.generateToken(username);
+        return LoginResponseDto.builder()
+            .token(token)
+            .username(user.getUsername())
+            .role(user.getRole())
+            .build();
     }
 }
