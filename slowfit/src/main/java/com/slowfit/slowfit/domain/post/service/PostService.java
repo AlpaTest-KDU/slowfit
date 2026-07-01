@@ -8,6 +8,7 @@ import com.slowfit.slowfit.domain.post.repository.PostRepository;
 import com.slowfit.slowfit.domain.user.entitiy.Role;
 import com.slowfit.slowfit.domain.user.entitiy.User;
 import com.slowfit.slowfit.domain.user.repository.UserRepository;
+import com.slowfit.slowfit.global.service.TextModerationService;
 import java.util.Objects;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -24,15 +25,28 @@ public class PostService {
     private final PostRepository postRepository;
     private final UserRepository userRepository;
     private final RedisPostService redisPostService;
+    private final TextModerationService textModerationService;
 
-    public PostService(PostRepository postRepository, UserRepository userRepository, RedisPostService redisPostService) {
+    public PostService(PostRepository postRepository, UserRepository userRepository, RedisPostService redisPostService,
+                       TextModerationService textModerationService) {
         this.postRepository = postRepository;
         this.userRepository = userRepository;
         this.redisPostService = redisPostService;
+        this.textModerationService = textModerationService;
     }
 
     public PostResponseDto createPost(@NonNull PostRequestDto requestDto) {
         User user = findAuthenticatedUser();
+
+        Boolean titleFlagged = textModerationService.moderateTextAsync(requestDto.getTitle()).join();
+        if (Boolean.TRUE.equals(titleFlagged)) {
+            throw new IllegalArgumentException("제목에 부적절한 내용이 포함되어 있습니다.");
+        }
+
+        Boolean contentFlagged = textModerationService.moderateTextAsync(requestDto.getContent()).join();
+        if (Boolean.TRUE.equals(contentFlagged)) {
+            throw new IllegalArgumentException("내용에 부적절한 텍스트가 포함되어 있습니다.");
+        }
 
         Post post = Objects.requireNonNull(Post.builder()
             .user(user)

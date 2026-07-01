@@ -9,6 +9,7 @@ import com.slowfit.slowfit.domain.post.repository.PostRepository;
 import com.slowfit.slowfit.domain.user.entitiy.Role;
 import com.slowfit.slowfit.domain.user.entitiy.User;
 import com.slowfit.slowfit.domain.user.repository.UserRepository;
+import com.slowfit.slowfit.global.service.TextModerationService;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
@@ -25,19 +26,27 @@ public class CommentService {
     private final CommentRepository commentRepository;
     private final PostRepository postRepository;
     private final UserRepository userRepository;
+    private final TextModerationService textModerationService;
 
     public CommentService(CommentRepository commentRepository,
                           PostRepository postRepository,
-                          UserRepository userRepository) {
+                          UserRepository userRepository,
+                          TextModerationService textModerationService) {
         this.commentRepository = commentRepository;
         this.postRepository = postRepository;
         this.userRepository = userRepository;
+        this.textModerationService = textModerationService;
     }
 
     public CommentResponseDto createComment(@NonNull Long postId, @NonNull CommentRequestDto requestDto) {
         Post post = findPostById(postId);
         User writer = findAuthenticatedUser();
         User mentionUser = resolveMentionUser(requestDto.getMentionUsername());
+
+        Boolean contentFlagged = textModerationService.moderateTextAsync(requestDto.getContent()).join();
+        if (Boolean.TRUE.equals(contentFlagged)) {
+            throw new IllegalArgumentException("댓글에 부적절한 텍스트가 포함되어 있습니다.");
+        }
 
         Comment comment = Objects.requireNonNull(Comment.builder()
             .post(post)

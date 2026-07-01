@@ -48,3 +48,11 @@ server:
 jwt:
   secret: your-secret-key-change-this-to-a-long-random-string-in-production
   expiration: 86400000 # 24시간 (밀리초)
+
+google:
+  cloud:
+    vision:
+      api-key: ${GOOGLE_VISION_API_KEY}
+
+openai:
+  api-key: ${OPENAI_API_KEY}
