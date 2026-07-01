@@ -10,6 +10,7 @@ import com.slowfit.slowfit.domain.user.entitiy.User;
 import com.slowfit.slowfit.domain.user.repository.UserRepository;
 import com.slowfit.slowfit.global.service.TextModerationService;
 import java.util.Objects;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.lang.NonNull;
@@ -72,6 +73,7 @@ public class PostService {
             .map(this::mapToResponseDto);
     }
 
+    @Cacheable(value = "posts", key = "#postId")
     public PostResponseDto getPost(@NonNull Long postId) {
         redisPostService.increaseViewCount(postId);
         return mapToResponseDto(findPostById(postId));
