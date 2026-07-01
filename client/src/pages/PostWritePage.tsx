@@ -1,4 +1,4 @@
-import { type FormEvent, useEffect, useState } from "react";
+import { type ChangeEvent, type FormEvent, useEffect, useState } from "react";
 import axios from "axios";
 import { useNavigate, useParams } from "react-router-dom";
 
@@ -8,6 +8,8 @@ export default function PostWritePage() {
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
   const [pace, setPace] = useState("");
+  const [courseUrl, setCourseUrl] = useState("");
+  const [imageUrl, setImageUrl] = useState("");
   const [boardType, setBoardType] = useState<
     "JOGGING" | "DIET" | "CERTIFICATION"
   >("JOGGING");
@@ -41,6 +43,8 @@ export default function PostWritePage() {
         setTitle(response.data.title);
         setContent(response.data.content);
         setPace(response.data.pace ?? "");
+        setCourseUrl(response.data.courseUrl ?? "");
+        setImageUrl(response.data.imageUrl ?? "");
         setBoardType(response.data.boardType);
       } catch (err) {
         console.error(err);
@@ -52,6 +56,43 @@ export default function PostWritePage() {
 
     fetchPost();
   }, [id, isEditMode, navigate]);
+
+  const handleImageUpload = async (e: ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const token = localStorage.getItem("accessToken");
+    if (!token) {
+      navigate("/login");
+      return;
+    }
+
+    const formData = new FormData();
+    formData.append("file", file);
+
+    try {
+      setLoading(true);
+      setError("");
+
+      const response = await axios.post(
+        "http://localhost:9090/api/upload",
+        formData,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "multipart/form-data",
+          },
+        },
+      );
+
+      setImageUrl(response.data.url ?? "");
+    } catch (err) {
+      console.error(err);
+      setError("이미지 업로드에 실패했습니다.");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -74,6 +115,8 @@ export default function PostWritePage() {
             title,
             content,
             pace,
+            courseUrl,
+            imageUrl,
           },
           {
             headers: {
@@ -90,6 +133,8 @@ export default function PostWritePage() {
             title,
             content,
             pace,
+            courseUrl,
+            imageUrl,
           },
           {
             headers: {
@@ -123,47 +168,32 @@ export default function PostWritePage() {
       >
         <h2>{isEditMode ? "게시글 수정" : "게시글 작성"}</h2>
         <form onSubmit={handleSubmit} style={{ display: "grid", gap: "1rem" }}>
-        <label
-          style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}
-        >
-          종류
-          <select
-            value={boardType}
-            onChange={(e) => setBoardType(e.target.value as "JOGGING" | "DIET")}
-            style={{ padding: "0.5rem" }}
-          >
-            <option value="JOGGING">JOGGING</option>
-            <option value="DIET">DIET</option>
-          </select>
-        </label>
-
-        <label
-          style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}
-        >
-          제목
-          <input
-            type="text"
-            value={title}
-            onChange={(e) => setTitle(e.target.value)}
-            required
-            placeholder="제목을 입력하세요"
-            style={{
-              padding: "0.75rem",
-              borderRadius: 4,
-              border: "1px solid #ccc",
-            }}
-          />
-        </label>
-        {boardType === "JOGGING" && (
           <label
             style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}
           >
-            페이스
+            종류
+            <select
+              value={boardType}
+              onChange={(e) =>
+                setBoardType(e.target.value as "JOGGING" | "DIET")
+              }
+              style={{ padding: "0.5rem" }}
+            >
+              <option value="JOGGING">조깅</option>
+              <option value="DIET">식단</option>
+            </select>
+          </label>
+
+          <label
+            style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}
+          >
+            제목
             <input
               type="text"
-              value={pace}
-              onChange={(e) => setPace(e.target.value)}
-              placeholder="예:7m30s/km"
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              required
+              placeholder="제목을 입력하세요"
               style={{
                 padding: "0.75rem",
                 borderRadius: 4,
@@ -171,50 +201,121 @@ export default function PostWritePage() {
               }}
             />
           </label>
-        )}
+          {boardType === "JOGGING" && (
+            <>
+              <label
+                style={{
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: "0.5rem",
+                }}
+              >
+                페이스
+                <input
+                  type="text"
+                  value={pace}
+                  onChange={(e) => setPace(e.target.value)}
+                  placeholder="예:7m30s/km"
+                  style={{
+                    padding: "0.75rem",
+                    borderRadius: 4,
+                    border: "1px solid #ccc",
+                  }}
+                />
+              </label>
+              <label
+                style={{
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: "0.5rem",
+                }}
+              >
+                코스 URL
+                <input
+                  type="text"
+                  value={courseUrl}
+                  onChange={(e) => setCourseUrl(e.target.value)}
+                  placeholder="예: https://www.naver.com/map/..."
+                  style={{
+                    padding: "0.75rem",
+                    borderRadius: 4,
+                    border: "1px solid #ccc",
+                  }}
+                />
+              </label>
+            </>
+          )}
 
-        <label
-          style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}
-        >
-          내용
-          <textarea
-            value={content}
-            onChange={(e) => setContent(e.target.value)}
-            required
-            rows={8}
-            placeholder="내용을 입력하세요"
-            style={{
-              padding: "0.75rem",
-              borderRadius: 4,
-              border: "1px solid #ccc",
-            }}
-          />
-        </label>
-
-        {error && <p style={{ color: "red" }}>{error}</p>}
-
-        <div style={{ display: "flex", gap: "0.75rem" }}>
-          <button
-            type="submit"
-            disabled={loading}
-            style={{ padding: "0.75rem 1.25rem", cursor: "pointer" }}
+          <label
+            style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}
           >
-            {loading
-              ? isEditMode
-                ? "수정 중..."
-                : "작성 중..."
-              : isEditMode
-                ? "수정 완료"
-                : "작성 완료"}
-          </button>
-          <button
-            type="button"
-            onClick={() => navigate("/board")}
-            style={{ padding: "0.75rem 1.25rem", cursor: "pointer" }}
+            이미지 업로드
+            <input
+              type="file"
+              accept="image/*"
+              onChange={handleImageUpload}
+              style={{ padding: "0.5rem" }}
+            />
+          </label>
+
+          {imageUrl && (
+            <div
+              style={{
+                display: "flex",
+                flexDirection: "column",
+                gap: "0.5rem",
+              }}
+            >
+              <img
+                src={`http://localhost:9090${imageUrl}`}
+                alt="업로드된 이미지"
+                style={{ maxWidth: "100%", borderRadius: 8 }}
+              />
+            </div>
+          )}
+
+          <label
+            style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}
           >
-            취소
-          </button>
-        </div>
+            내용
+            <textarea
+              value={content}
+              onChange={(e) => setContent(e.target.value)}
+              required
+              rows={8}
+              placeholder="내용을 입력하세요"
+              style={{
+                padding: "0.75rem",
+                borderRadius: 4,
+                border: "1px solid #ccc",
+              }}
+            />
+          </label>
+
+          {error && <p style={{ color: "red" }}>{error}</p>}
+
+          <div style={{ display: "flex", gap: "0.75rem" }}>
+            <button
+              type="submit"
+              disabled={loading}
+              style={{ padding: "0.75rem 1.25rem", cursor: "pointer" }}
+            >
+              {loading
+                ? isEditMode
+                  ? "수정 중..."
+                  : "작성 중..."
+                : isEditMode
+                  ? "수정 완료"
+                  : "작성 완료"}
+            </button>
+            <button
+              type="button"
+              onClick={() => navigate("/board")}
+              style={{ padding: "0.75rem 1.25rem", cursor: "pointer" }}
+            >
+              취소
+            </button>
+          </div>
         </form>
       </div>
     </div>

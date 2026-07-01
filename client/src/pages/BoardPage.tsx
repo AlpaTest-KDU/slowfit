@@ -14,6 +14,11 @@ export default function BoardPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const navigate = useNavigate();
+  const boardTypeLabel = {
+    JOGGING: "조깅",
+    DIET: "식단",
+    CERTIFICATION: "채팅방",
+  };
 
   const fetchPosts = useCallback(
     async (boardType: BoardType | null, pageNumber = 0) => {
@@ -45,8 +50,10 @@ export default function BoardPage() {
 
         const pageData = response.data;
         const content = pageData?.content ?? [];
-        const currentPage = typeof pageData?.number === "number" ? pageData.number : pageNumber;
-        const total = typeof pageData?.totalPages === "number" ? pageData.totalPages : 1;
+        const currentPage =
+          typeof pageData?.number === "number" ? pageData.number : pageNumber;
+        const total =
+          typeof pageData?.totalPages === "number" ? pageData.totalPages : 1;
 
         setPosts(content);
         setPage(currentPage);
@@ -120,19 +127,19 @@ export default function BoardPage() {
           onClick={() => handleTabClick("JOGGING")}
           style={tabButtonStyle(activeBoardType === "JOGGING")}
         >
-          JOGGING
+          조깅
         </button>
         <button
           onClick={() => handleTabClick("DIET")}
           style={tabButtonStyle(activeBoardType === "DIET")}
         >
-          DIET
+          식단
         </button>
         <button
           onClick={() => navigate("/chat")}
           style={tabButtonStyle(activeBoardType === "CERTIFICATION")}
         >
-          CERTIFICATION
+          채팅방
         </button>
       </div>
 
@@ -153,73 +160,73 @@ export default function BoardPage() {
                   borderRadius: 8,
                 }}
               >
-              <div
-                style={{
-                  marginBottom: "0.5rem",
-                  display: "flex",
-                  justifyContent: "space-between",
-                }}
-              >
-                <strong
-                  style={{ cursor: "pointer", color: "#007bff" }}
-                  onClick={() => navigate(`/posts/${post.id}`)}
+                <div
+                  style={{
+                    marginBottom: "0.5rem",
+                    display: "flex",
+                    justifyContent: "space-between",
+                  }}
                 >
-                  {post.title}
-                </strong>
-                <span>{post.boardType}</span>
-              </div>
-              <p style={{ margin: "0.5rem 0" }}>{post.content}</p>
-              <div
-                style={{
-                  display: "flex",
-                  gap: "1rem",
-                  flexWrap: "wrap",
-                  fontSize: 14,
-                  color: "#555",
-                }}
-              >
-                <span>작성자: {post.username}</span>
-                <span>조회수: {post.viewCount}</span>
-                <span>좋아요: {post.likeCount}</span>
-                <span>생성: {formatDate(post.createdAt)}</span>
-                <span>수정: {formatDate(post.updatedAt)}</span>
-              </div>
-            </article>
-          ))}
-        </div>
+                  <strong
+                    style={{ cursor: "pointer", color: "#007bff" }}
+                    onClick={() => navigate(`/posts/${post.id}`)}
+                  >
+                    {post.title}
+                  </strong>
+                  <span>{boardTypeLabel[post.boardType]}</span>
+                </div>
+                <p style={{ margin: "0.5rem 0" }}>{post.content}</p>
+                <div
+                  style={{
+                    display: "flex",
+                    gap: "1rem",
+                    flexWrap: "wrap",
+                    fontSize: 14,
+                    color: "#555",
+                  }}
+                >
+                  <span>작성자: {post.username}</span>
+                  <span>조회수: {post.viewCount}</span>
+                  <span>좋아요: {post.likeCount}</span>
+                  <span>생성: {formatDate(post.createdAt)}</span>
+                  <span>수정: {formatDate(post.updatedAt)}</span>
+                </div>
+              </article>
+            ))}
+          </div>
 
-        <div
-          style={{
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            gap: "1rem",
-            marginTop: "1.5rem",
-          }}
-        >
-          <button
-            type="button"
-            onClick={handlePrevPage}
-            disabled={page === 0}
-            style={paginationButtonStyle(page === 0)}
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              gap: "1rem",
+              marginTop: "1.5rem",
+            }}
           >
-            이전
-          </button>
-          <span>
-            {totalPages > 0
-              ? `현재 페이지 ${page + 1} / ${totalPages}`
-              : `현재 페이지 ${page + 1}`}
-          </span>
-          <button
-            type="button"
-            onClick={handleNextPage}
-            disabled={page + 1 >= totalPages}
-            style={paginationButtonStyle(page + 1 >= totalPages)}
-          >
-            다음
-          </button>
-        </div>
-      </>
+            <button
+              type="button"
+              onClick={handlePrevPage}
+              disabled={page === 0}
+              style={paginationButtonStyle(page === 0)}
+            >
+              이전
+            </button>
+            <span>
+              {totalPages > 0
+                ? `현재 페이지 ${page + 1} / ${totalPages}`
+                : `현재 페이지 ${page + 1}`}
+            </span>
+            <button
+              type="button"
+              onClick={handleNextPage}
+              disabled={page + 1 >= totalPages}
+              style={paginationButtonStyle(page + 1 >= totalPages)}
+            >
+              다음
+            </button>
+          </div>
+        </>
       )}
     </div>
   );

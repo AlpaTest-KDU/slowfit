@@ -9,6 +9,8 @@ interface PostDetail {
   title: string;
   content: string;
   pace?: string | null;
+  courseUrl?: string | null;
+  imageUrl?: string | null;
   viewCount: number;
   likeCount: number;
   createdAt: string;
@@ -312,11 +314,32 @@ export default function PostDetailPage() {
             </div>
             <p style={{ margin: "0.5rem 0", color: "#555" }}>
               {post.boardType} · 작성자: {post.username}
-              {post.pace ? ` · ♥${post.pace}` : ''}
+              {post.pace ? ` · ♥${post.pace}` : ""}
+              {post.courseUrl && (
+                <a
+                  href={post.courseUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  style={{ color: "#1976d2", textDecoration: "underline" }}
+                >
+                  코스 보기
+                </a>
+              )}
             </p>
             <div style={{ whiteSpace: "pre-wrap", marginBottom: "1rem" }}>
               {post.content}
             </div>
+            {post.imageUrl && (
+              <img
+                src={`http://localhost:9090${post.imageUrl}`}
+                alt="게시글 이미지"
+                style={{
+                  maxWidth: "100%",
+                  borderRadius: 8,
+                  marginBottom: "1rem",
+                }}
+              />
+            )}
             <div
               style={{
                 display: "flex",
@@ -432,7 +455,8 @@ export default function PostDetailPage() {
                             const mentionTag = `@${comment.username} `;
                             setCommentContent((prev) => {
                               const trimmed = prev.trimStart();
-                              const currentMentionMatch = trimmed.match(/^@[^\s@]+\s*/);
+                              const currentMentionMatch =
+                                trimmed.match(/^@[^\s@]+\s*/);
                               const remaining = currentMentionMatch
                                 ? trimmed.slice(currentMentionMatch[0].length)
                                 : trimmed;

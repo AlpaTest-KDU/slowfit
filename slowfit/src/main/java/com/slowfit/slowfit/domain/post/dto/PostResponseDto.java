@@ -23,6 +23,8 @@ public class PostResponseDto {
     private String title;
     private String content;
     private String pace;
+    private String courseUrl;
+    private String imageUrl;
     private Integer viewCount;
     private Integer likeCount;
     private LocalDateTime createdAt;

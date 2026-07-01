@@ -28,4 +28,8 @@ public class PostRequestDto {
     private String content;
 
     private String pace;
+
+    private String courseUrl;
+
+    private String imageUrl;
 }

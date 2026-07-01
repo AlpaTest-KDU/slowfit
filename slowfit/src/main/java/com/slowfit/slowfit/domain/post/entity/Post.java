@@ -54,6 +54,10 @@ public class Post {
 
     private String pace;
 
+    private String courseUrl;
+
+    private String imageUrl;
+
     @Builder.Default
     @Column(nullable = false)
     private Integer viewCount = 0;

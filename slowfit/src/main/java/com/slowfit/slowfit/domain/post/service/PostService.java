@@ -40,6 +40,8 @@ public class PostService {
             .title(requestDto.getTitle())
             .content(requestDto.getContent())
             .pace(requestDto.getPace())
+            .courseUrl(requestDto.getBoardType() == BoardType.JOGGING ? requestDto.getCourseUrl() : null)
+            .imageUrl(requestDto.getImageUrl())
             .build());
 
         Post savedPost = postRepository.save(post);
@@ -69,6 +71,8 @@ public class PostService {
         post.setTitle(requestDto.getTitle());
         post.setContent(requestDto.getContent());
         post.setPace(requestDto.getPace());
+        post.setCourseUrl(requestDto.getBoardType() == BoardType.JOGGING ? requestDto.getCourseUrl() : null);
+        post.setImageUrl(requestDto.getImageUrl());
 
         return mapToResponseDto(post);
     }
@@ -109,6 +113,8 @@ public class PostService {
             .title(post.getTitle())
             .content(post.getContent())
             .pace(post.getPace())
+            .courseUrl(post.getCourseUrl())
+            .imageUrl(post.getImageUrl())
             .viewCount(post.getViewCount())
             .likeCount(post.getLikeCount())
             .createdAt(post.getCreatedAt())
