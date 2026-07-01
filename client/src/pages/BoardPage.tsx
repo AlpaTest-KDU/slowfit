@@ -87,7 +87,15 @@ export default function BoardPage() {
   };
 
   return (
-    <div style={{ maxWidth: 900, margin: "2rem auto", padding: "1rem" }}>
+    <div
+      style={{
+        maxWidth: 900,
+        margin: "2rem auto",
+        padding: "2rem",
+        background: "rgba(255,255,255,0.85)",
+        borderRadius: 12,
+      }}
+    >
       <h2>게시판</h2>
       <button
         type="button"

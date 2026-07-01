@@ -96,7 +96,15 @@ export default function ChatPage() {
   };
 
   return (
-    <div style={{ maxWidth: 900, margin: '2rem auto', padding: '1rem' }}>
+    <div
+      style={{
+        maxWidth: 900,
+        margin: '2rem auto',
+        padding: '2rem',
+        background: 'rgba(255,255,255,0.85)',
+        borderRadius: 12,
+      }}
+    >
       <h2>채팅방</h2>
       <p>채팅방 ID: {roomId}</p>
       <p>사용자: {username}</p>

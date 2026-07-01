@@ -34,7 +34,15 @@ export default function SignupPage() {
   };
 
   return (
-    <div style={{ maxWidth: 400, margin: '2rem auto', padding: '1rem' }}>
+    <div
+      style={{
+        maxWidth: 400,
+        margin: '2rem auto',
+        padding: '2rem',
+        background: 'rgba(255,255,255,0.85)',
+        borderRadius: 12,
+      }}
+    >
       <h2>회원가입</h2>
       <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
         <input name="username" placeholder="username" value={form.username} onChange={handleChange} required />

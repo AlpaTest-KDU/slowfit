@@ -1,3 +1,4 @@
+import { AppBar, Box, Button, Toolbar, Typography } from "@mui/material";
 import { Link, useNavigate } from "react-router-dom";
 
 function Navbar() {
@@ -9,29 +10,33 @@ function Navbar() {
   };
 
   return (
-    <nav
-      style={{
-        display: "flex",
-        justifyContent: "space-between",
-        alignItems: "center",
-        padding: "12px 20px",
-        background: "#1f2937",
+    <AppBar
+      position="static"
+      elevation={0}
+      sx={{
+        background: "linear-gradient(90deg, #27500A 0%, #97C459 100%)",
         color: "#fff",
       }}
     >
-      <div style={{ display: "flex", gap: "16px" }}>
-        <Link to="/board" style={linkStyle}>
-          게시판
-        </Link>
-        <Link to="/chat" style={linkStyle}>
-          채팅방
-        </Link>
-      </div>
+      <Toolbar sx={{ justifyContent: "space-between" }}>
+        <Box sx={{ display: "flex", gap: 2, alignItems: "center" }}>
+          <Typography component={Link} to="/board" sx={linkStyle}>
+            게시판
+          </Typography>
+          <Typography component={Link} to="/chat" sx={linkStyle}>
+            채팅방
+          </Typography>
+        </Box>
 
-      <button type="button" onClick={handleLogout} style={buttonStyle}>
-        로그아웃
-      </button>
-    </nav>
+        <Button
+          variant="outlined"
+          onClick={handleLogout}
+          sx={buttonStyle}
+        >
+          로그아웃
+        </Button>
+      </Toolbar>
+    </AppBar>
   );
 }
 
@@ -39,15 +44,19 @@ const linkStyle = {
   color: "#fff",
   textDecoration: "none",
   fontWeight: 600,
+  fontSize: "1rem",
 };
 
 const buttonStyle = {
-  background: "transparent",
-  border: "1px solid #fff",
   color: "#fff",
+  borderColor: "rgba(255,255,255,0.8)",
   borderRadius: "4px",
-  padding: "6px 10px",
-  cursor: "pointer",
+  px: 1.5,
+  py: 0.75,
+  "&:hover": {
+    borderColor: "#fff",
+    backgroundColor: "rgba(255,255,255,0.12)",
+  },
 };
 
 export default Navbar;

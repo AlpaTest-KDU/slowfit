@@ -114,8 +114,15 @@ export default function PostWritePage() {
 
   return (
     <div style={{ maxWidth: 700, margin: "2rem auto", padding: "1rem" }}>
-      <h2>{isEditMode ? "게시글 수정" : "게시글 작성"}</h2>
-      <form onSubmit={handleSubmit} style={{ display: "grid", gap: "1rem" }}>
+      <div
+        style={{
+          background: "rgba(255,255,255,0.85)",
+          borderRadius: 12,
+          padding: "2rem",
+        }}
+      >
+        <h2>{isEditMode ? "게시글 수정" : "게시글 작성"}</h2>
+        <form onSubmit={handleSubmit} style={{ display: "grid", gap: "1rem" }}>
         <label
           style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}
         >
@@ -208,7 +215,8 @@ export default function PostWritePage() {
             취소
           </button>
         </div>
-      </form>
+        </form>
+      </div>
     </div>
   );
 }
