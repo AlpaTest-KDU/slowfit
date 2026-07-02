@@ -399,6 +399,14 @@ ALTER TABLE posts MODIFY COLUMN board_type ENUM('JOGGING', 'DIET', 'CHAT') NOT N
 - `/app/chat/{roomId}` - 메시지 발행
 - `/topic/chat/{roomId}` - 메시지 구독
 
+### 파일 API
+
+- `POST /api/upload` - 이미지 업로드 (Google Vision API 필터링 포함)
+
+### 기타
+
+- `GET /api/posts/health` - 헬스체크
+
 ---
 
 ## 라이선스
