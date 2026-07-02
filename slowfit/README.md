@@ -48,7 +48,9 @@
 - **Version Control**: Git
 - **Repository**: GitHub
 
----
+### AI 필터링
+
+- **Text Filtering**: OpenAI Moderation API - **Image Filtering**: Google Cloud Vision API
 
 ## 주요 기능
 
@@ -91,6 +93,12 @@
 - STOMP 프로토콜 기반 메시지 라우팅
 - 사용자 입장/퇴장 메시지
 - 채팅 메시지 타임스탬프
+
+### 6. AI 콘텐츠 필터링
+
+- 텍스트 필터링: 게시글/댓글 작성 시 OpenAI Moderation API로 욕설·혐오·폭력 콘텐츠 감지 및 차단
+- 이미지 필터링: 이미지 업로드 시 Google Cloud Vision SafeSearch로 부적절한 이미지 차단 (LIKELY 이상)
+- @Async 비동기 처리로 응답 지연 최소화
 
 ---
 
