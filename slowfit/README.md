@@ -57,29 +57,33 @@
 - 회원가입 (username, password, name, age, gender, email)
 - 로그인 (JWT 토큰 기반 인증)
 - 역할 기반 접근 제어 (ADMIN/USER)
+- ADMIN: 모든 게시글/댓글 삭제 가능
 
 ### 2. 게시판 시스템
 
 - **멀티 카테고리 게시판**
-  - JOGGING: 슬로우조깅 기록 및 정보 공유
-  - DIET: 식단 관리 및 영양 정보
-  - CHAT: 회원 채팅방
-- **페이지네이션**: 게시물 목록 페이지네이션 (기본 10개씩)
-- **조회수 카운팅**: 게시물 조회 시 자동 증가
-- **좋아요 기능**: Redis 기반 좋아요 상태 관리
+  - JOGGING: 슬로우조깅 기록 및 정보 공유 (페이스, 코스 URL, 이미지 업로드)
+  - DIET: 식단 관리 및 영양 정보 (이미지 업로드)
+  - CHAT: 실시간 채팅방으로 이동
+- **페이지네이션**: 게시글 목록 페이지네이션 (기본 10개씩)
+- **조회수**: Redis INCR로 카운트 → 1분마다 DB 동기화
+- **좋아요**: Redis Set으로 중복 방지 → 1분마다 DB 동기화
+- **Redis 캐싱**: 게시글 상세 조회 캐싱 (TTL 10분)
 
-### 3. 게시물 기능
+### 3. 게시글 기능
 
-- 게시물 작성, 수정, 삭제
-- 페이스(pace) 정보 입력 (JOGGING 카테고리)
-- 작성자/관리자만 수정 및 삭제 가능
+- 게시글 작성, 수정, 삭제
+- 페이스 입력 (JOGGING 전용, 예: 7m30s/km)
+- 코스 URL 입력 (JOGGING 전용, 링크로 표시)
+- 이미지 업로드 (Google Vision API SafeSearch 필터링)
+- 텍스트 필터링 (OpenAI Moderation API)
 
 ### 4. 댓글 시스템
 
-- 게시물에 댓글 작성
-- **사용자 멘션**: @username 형태의 멘션 지원
+- 게시글에 댓글 작성
+- **사용자 멘션**: 댓글 작성자 클릭 시 @username 자동 입력
 - 댓글 작성자/관리자만 삭제 가능
-- 멘션된 사용자 정보 저장
+- 텍스트 필터링 (OpenAI Moderation API)
 
 ### 5. 실시간 채팅
 
@@ -104,8 +108,8 @@ com.slowfit.slowfit/
 │   │   ├── dto/
 │   │   └── repository/
 │   ├── post/
-│   │   ├── controller/
-│   │   ├── service/
+│   │   ├── controller/ (PostController, FileUploadController)
+│   │   ├── service/ (PostService, RedisPostService)
 │   │   ├── entity/
 │   │   ├── dto/
 │   │   └── repository/
@@ -119,12 +123,19 @@ com.slowfit.slowfit/
 │       ├── controller/
 │       └── dto/
 └── global/
-    └── config/
-        ├── SecurityConfig.java
-        ├── SwaggerConfig.java
-        ├── WebSocketConfig.java
-        └── security/
-            └── JwtFilter.java
+    ├── config/
+    │   ├── SecurityConfig.java
+    │   ├── SwaggerConfig.java
+    │   ├── WebSocketConfig.java
+    │   ├── RedisConfig.java
+    │   ├── RedisCacheConfig.java
+    │   ├── AsyncConfig.java
+    │   ├── WebConfig.java
+    │   └── security/
+    │       └── JwtFilter.java
+    └── service/
+        ├── ImageModerationService.java
+        └── TextModerationService.java
 ```
 
 ### Frontend 구조
@@ -140,9 +151,12 @@ client/src/
 │   └── ChatPage.tsx
 ├── components/
 │   └── Navbar.tsx
+├── assets/
+│   └── background.jpg
 ├── types/
 │   └── sockjs-client.d.ts
 ├── App.tsx
+├── index.css
 └── main.tsx
 ```
 
@@ -152,16 +166,25 @@ client/src/
    - 사용자 로그인 → JWT 토큰 발급 → 클라이언트 저장
    - 모든 API 요청에 Authorization 헤더로 토큰 전달
 
-2. **게시물 조회 흐름**
-   - 클라이언트 요청 → Controller → Service → Repository
+2. **게시글 조회 흐름**
+   - 클라이언트 요청 → Controller → Service → Redis 캐시 확인
+   - 캐시 히트: Redis에서 즉시 반환 (TTL 10분)
+   - 캐시 미스: DB 조회 → Redis 캐시 저장 → 응답
    - 페이지네이션 처리 (Pageable)
-   - 응답: Page<PostResponseDto>
 
-3. **좋아요 기능**
-   - Redis에 사용자별 좋아요 상태 저장
-   - 토글 시 좋아요 수 증감
+3. **조회수/좋아요 기능**
+   - 조회수: Redis INCR로 카운트 → @Scheduled 1분마다 DB 동기화
+   - 좋아요: Redis Set으로 중복 방지 → @Scheduled 1분마다 DB 동기화
 
-4. **실시간 채팅**
+4. **이미지 업로드 흐름**
+   - 이미지 업로드 → 서버 로컬 저장 → Google Vision API SafeSearch 검사
+   - LIKELY 이상 부적절 이미지 → 파일 삭제 + 400 에러 반환
+
+5. **텍스트 필터링 흐름**
+   - 게시글/댓글 작성 → OpenAI Moderation API 검사
+   - flagged: true → 저장 거부 + 에러 반환
+
+6. **실시간 채팅**
    - WebSocket 연결 → STOMP 핸드셰이크
    - 메시지 발행 → 브로드캐스트 → 모든 클라이언트에 전달
 
@@ -232,6 +255,26 @@ docker start redis
 **해결**: SecurityConfig에서 PasswordEncoder Bean으로 등록하고 UserService에서 생성자 주입으로 변경
 
 ---
+
+### 7. Redis 캐싱 LocalDateTime 직렬화 오류
+
+**문제**: Redis 캐싱 적용 후 LocalDateTime 직렬화 오류로 에러율 100% 발생
+
+**원인**: GenericJackson2JsonRedisSerializer가 LocalDateTime을 직렬화하지 못함
+
+**해결**: RedisCacheConfig에서 ObjectMapper에 JavaTimeModule 등록 및 WRITE_DATES_AS_TIMESTAMPS 비활성화
+
+### 8. BoardType ENUM 변경 시 DB 오류
+
+**문제**: CERTIFICATION → CHAT으로 변경 후 서버 에러 발생
+
+**원인**: ddl-auto: update 설정으로 테이블은 유지되는데 ENUM 값이 변경되어 불일치 발생
+
+**해결**: HeidiSQL에서 직접 ALTER TABLE로 ENUM 값 변경
+
+```sql
+ALTER TABLE posts MODIFY COLUMN board_type ENUM('JOGGING', 'DIET', 'CHAT') NOT NULL;
+```
 
 ## 부하 테스트 결과 (JMeter, 동시 1000명)
 
